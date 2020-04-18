@@ -1,17 +1,14 @@
 ﻿//background
-//задача--поиск
-var $=document;//shortcut
-var ls=localStorage;//shortcut
 
+var $=document;//shortcut
+
+var lang;
 var tabID;
 
 var d={//data
-	type:0,//тип поиска:1-по списку страниц,2-по кнопке следующей страницы,3-по кнопке следующей страницы и количеству стр,4-с подгрузкой,5-ожидание подгрузки
-	nextPage:0,//следующая страница
-	pages:new Set(),//список страниц
-	currentPage:0,//текущая страница
-	cols:new Set(),//колонки
-	tabString:0,//строка таблицы
+	nextPage:0,
+	cols:new Set(),
+	tabRow:0,
 	results:new Set(),
 	search:"",
 	inner:""
@@ -36,37 +33,25 @@ const runSearch=function(){
 }
 
 chrome.runtime.onMessage.addListener(function(req,sender,resp){
-	if(req.type=="get"){
+	if(req.type=="get"){//listens popupS, inits var search
 		if(req.b=="winInit"){
 			if(d.search=="")d.search=false;
 			resp({isSearching:d.search});
-		}else if(req.b=="pageList"){
-			let a=[]
-			d.pages.forEach(i=>a.push(i))
-			resp({b:a});
 		}
-		
-	}else if(req.type=="checkPages"){
+	}else if(req.type=="checkPages"){//listens contentS and inits var tabID
 		tabID=sender.tab.id;
 		if(d.search)runSearch();
 		resp();
-	}else if(req.type=="winState"){
+	}else if(req.type=="winState"){//listens popupS; change state
 		if(req.b.el=="search"){
 			d.search=req.b.state;
 			if(d.search)runSearch();
-		}else if(req.b.el=="isSP"){
-			d.isSP=req.b.state;
+		}else if(req.b.el=="lang"){
+			lang=req.b.state;
 		}
 		resp();
 	}else if(req.type=="cmd"){
-		if(req.b.cType=="addToPages"){
-			if(sender.url=="chrome-extension://"+chrome.runtime.id+"/popup.html"){
-				chrome.tabs.sendMessage(tabID,req);
-			}else{
-				d.pages.add(req.b.other);
-			}
-			resp();
-		} else if(req.b.cType=="addCol"){
+		if(req.b.cType=="addCol"){//adds column to table
 			if(sender.url=="chrome-extension://"+chrome.runtime.id+"/popup.html"){
 				chrome.tabs.sendMessage(tabID,req);
 				resp();
@@ -75,9 +60,6 @@ chrome.runtime.onMessage.addListener(function(req,sender,resp){
 				chrome.runtime.sendMessage({type:"toPopup",b:{t:"colAdded"}},function(resp1){});
 				resp();
 			}
-		} else if(req.b.cType=="removePage"){
-			d.pages.delete(req.b.other);
-			resp();
 		} else if(req.b.cType=="showCols"){
 			let a=[];
 			d.cols.forEach(i=>a.push(i));
@@ -99,7 +81,7 @@ chrome.runtime.onMessage.addListener(function(req,sender,resp){
 				d.inner=req.b.inner;
 			}
 			resp();
-		}else if(req.b.cType=="cAddNextPage"){
+		}else if(req.b.cType=="cAddNextPage"){//cancelAddNextPage
 			chrome.tabs.sendMessage(tabID,{type:"cmd",b:{cType:"cAddNextPage"}},(r)=>{});
 			resp();
 		} else if(req.b.cType=="showNextPage"){
