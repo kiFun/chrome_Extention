@@ -1,0 +1,19 @@
+{
+	"manifest_version":2,
+	"name":"ParserChrome",
+	"version":"1.0",
+	"content_scripts":[{
+		"matches":["*://*/*"],
+		"js":["contentScript.js"]
+		}],
+	"background": {
+		"scripts": ["bgScript.js"]
+	},
+	"browser_action":{
+		"default_title":"Поиск по страницам",
+		"default_icon":"defaultIcon.png",
+		"default_popup":"popup.html"
+	},
+	"permissions":["*://*/*","tabs","activeTab"]
+}
+
